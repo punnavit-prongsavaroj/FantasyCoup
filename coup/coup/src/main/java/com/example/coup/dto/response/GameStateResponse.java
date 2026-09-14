@@ -1,5 +1,13 @@
 package com.example.coup.dto.response;
 
-public class GameStateResponse {
-}
+import lombok.Builder;
+import lombok.Data;
+import java.util.List;
 
+@Data
+@Builder
+public class GameStateResponse {
+    private String gameId;
+    private String status;
+    private List<String> players;
+}

@@ -1,5 +1,9 @@
 package com.example.coup.dto.request;
 
-public class JoinGameRequest {
-}
+import lombok.Data;
 
+@Data
+public class JoinGameRequest {
+    private String gameId;
+    private String playerName;
+}
