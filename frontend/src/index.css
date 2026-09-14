@@ -1,9 +1,1 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  body {
-    @apply bg-gray-900 text-white font-sans antialiased;
-  }
-}
+@import "tailwindcss";
