@@ -39,7 +39,7 @@ public class Game {
         this.deck.clear();
         for (int i = 0; i < 3; i++) {
             deck.add(Card.create(Role.KING));
-            deck.add(Card.create(Role.ADVENTURER));
+            deck.add(Card.create(Role.HERO));
             deck.add(Card.create(Role.ASSASSIN));
             deck.add(Card.create(Role.HOLY_MAIDEN));
             deck.add(Card.create(Role.MERCHANT));

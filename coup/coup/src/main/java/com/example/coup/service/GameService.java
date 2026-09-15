@@ -142,7 +142,7 @@ public class GameService {
     private String getRequiredRoleForAction(com.example.coup.domain.enums.ActionType actionType) {
         switch(actionType) {
             case TAX: return "KING";
-            case STEAL: return "ADVENTURER"; // Also MERCHANT, but simplify for now
+            case STEAL: return "HERO"; // Also MERCHANT, but simplify for now
             case ASSASSINATE: return "ASSASSIN";
             case EXCHANGE: return "MERCHANT";
             default: return null;

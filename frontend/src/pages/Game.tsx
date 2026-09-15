@@ -7,7 +7,7 @@ import type { PlayerPublicState } from '../store/gameStore';
 const getRoleColor = (role: string) => {
   switch(role) {
     case 'KING': return 'bg-purple-600 border-purple-400';
-    case 'ADVENTURER': return 'bg-blue-600 border-blue-400';
+    case 'HERO': return 'bg-blue-600 border-blue-400';
     case 'ASSASSIN': return 'bg-red-800 border-red-500';
     case 'HOLY_MAIDEN': return 'bg-pink-600 border-pink-400';
     case 'MERCHANT': return 'bg-green-600 border-green-400';
@@ -209,7 +209,7 @@ export default function Game() {
                           )}
                           {useGameStore.getState().pendingAction?.actionType === 'STEAL' && (
                             <>
-                              <button onClick={() => { setBlocking(false); useGameStore.getState().reactToAction('BLOCK', 'ADVENTURER'); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 font-bold rounded-lg transition">🥷 Adventurer</button>
+                              <button onClick={() => { setBlocking(false); useGameStore.getState().reactToAction('BLOCK', 'HERO'); }} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 font-bold rounded-lg transition">🗡️ Hero (ผู้กล้า)</button>
                               <button onClick={() => { setBlocking(false); useGameStore.getState().reactToAction('BLOCK', 'MERCHANT'); }} className="px-4 py-2 bg-green-600 hover:bg-green-500 font-bold rounded-lg transition">📜 Merchant</button>
                             </>
                           )}
@@ -328,8 +328,8 @@ export default function Game() {
                         onClick={() => setTargetAction('STEAL')}
                         className="p-3 bg-blue-900/40 hover:bg-blue-800/60 border border-blue-500/50 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
                       >
-                        <span className="text-xl">🥷</span>
-                        <span className="font-bold text-blue-200 group-hover:text-white text-sm">Steal (Adv.)</span>
+                        <span className="text-xl">🗡️</span>
+                        <span className="font-bold text-blue-200 group-hover:text-white text-sm">Steal (Hero)</span>
                         <span className="text-xs text-green-400">+2 Coins from Target</span>
                       </button>
 
@@ -397,10 +397,18 @@ export default function Game() {
                         useGameStore.getState().loseCard(card.id);
                       }
                     }}
+                    style={{
+                      backgroundImage: card.revealed ? 'none' : `url(/cards/${card.role.toLowerCase()}.jpg)`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
                     className={`w-36 h-56 rounded-xl flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group border-2 transition-transform hover:-translate-y-2
                       ${card.revealed ? 'bg-gray-800 border-red-800 grayscale' : getRoleColor(card.role)}
                       ${gameStatus === 'WAITING_FOR_LOSE_CARD' && useGameStore.getState().pendingAction?.playerToLoseCard === playerName && !card.revealed ? 'cursor-pointer border-red-500 animate-pulse hover:scale-110' : 'cursor-default'}`}
                   >
+                    {/* Dark overlay to make text readable if image is bright */}
+                    {!card.revealed && <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>}
+                    
                     {card.revealed && (
                       <div className="absolute inset-0 bg-red-900/40 z-10 flex items-center justify-center">
                         <span className="text-red-500 font-bold text-2xl -rotate-45 border-4 border-red-500 p-2 rounded">DEAD</span>
