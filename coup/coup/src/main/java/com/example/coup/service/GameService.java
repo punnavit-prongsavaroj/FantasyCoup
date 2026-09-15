@@ -55,6 +55,12 @@ public class GameService {
             }
             return;
         }
+
+        if (actionType == com.example.coup.domain.enums.ActionType.ASSASSINATE) {
+            if (player.getCoins() < 3) {
+                return; // Not enough coins
+            }
+        }
         
         // For other actions, enter ACTION_PENDING
         // Pay cost upfront
@@ -186,6 +192,7 @@ public class GameService {
                     break;
                 case ASSASSINATE:
                     if (target != null) {
+                        source.loseCoins(3); // หักเงินเมื่อเคลียร์ challenge / block เสร็จและผ่าน
                         action.setPlayerToLoseCard(target.getName());
                         game.setStatus("WAITING_FOR_LOSE_CARD");
                     } else {
@@ -194,6 +201,14 @@ public class GameService {
                             game.setPendingAction(null);
                             game.nextTurn();
                         }
+                    }
+                    break;
+                case EXCHANGE:
+                    if (source != null) {
+                        // Draw 1 card from deck
+                        if (game.getDeck().size() >= 1) source.getHand().add(game.getDeck().remove(0));
+                        action.setPlayerToLoseCard(source.getName()); // Use this field to track who is exchanging
+                        game.setStatus("WAITING_FOR_EXCHANGE");
                     }
                     break;
                 default:
@@ -216,6 +231,28 @@ public class GameService {
             if (p != null) {
                 p.getHand().stream().filter(c -> c.getId().equals(cardId)).findFirst().ifPresent(c -> c.setRevealed(true));
                 p.checkAliveStatus();
+                game.setPendingAction(null);
+                game.setStatus("IN_PROGRESS");
+                game.nextTurn();
+            }
+        }
+    }
+
+    public void returnCards(String gameId, String playerName, java.util.List<String> cardIds) {
+        Game game = getGame(gameId);
+        if (game == null || !game.getStatus().equals("WAITING_FOR_EXCHANGE")) return;
+        
+        if (game.getPendingAction() != null && game.getPendingAction().getPlayerToLoseCard().equals(playerName)) {
+            com.example.coup.domain.Player p = game.getPlayerByName(playerName).orElse(null);
+            if (p != null) {
+                for (String cardId : cardIds) {
+                    com.example.coup.domain.Card cardToReturn = p.getHand().stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
+                    if (cardToReturn != null) {
+                        p.getHand().remove(cardToReturn);
+                        game.getDeck().add(cardToReturn);
+                    }
+                }
+                java.util.Collections.shuffle(game.getDeck());
                 game.setPendingAction(null);
                 game.setStatus("IN_PROGRESS");
                 game.nextTurn();

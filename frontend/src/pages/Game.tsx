@@ -27,6 +27,7 @@ export default function Game() {
   const [targetAction, setTargetAction] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [selectedCardsToReturn, setSelectedCardsToReturn] = useState<string[]>([]);
   const bgmRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -203,13 +204,16 @@ export default function Game() {
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <div className="bg-gray-800/80 p-8 rounded-2xl border-2 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.2)] max-w-2xl w-full">
                 <h2 className="text-3xl font-black mb-4 text-yellow-400">Action Declared</h2>
-                <p className="text-xl text-white mb-8">
+                <p className="text-xl text-white mb-6">
                   <span className="font-bold text-green-400">{useGameStore.getState().pendingAction?.sourcePlayer}</span> is using 
                   <span className="font-bold text-indigo-400 mx-2">{useGameStore.getState().pendingAction?.actionType}</span>
                   {useGameStore.getState().pendingAction?.targetPlayer && (
                     <>on <span className="font-bold text-red-400">{useGameStore.getState().pendingAction?.targetPlayer}</span></>
                   )}
                 </p>
+                <div className="mb-4 text-gray-400 text-sm">
+                  {useGameStore.getState().pendingAction?.passedPlayers?.length || 0} / {Math.max(1, playersState.filter(p => p.alive).length - 1)} players passed
+                </div>
 
                 {playerName === useGameStore.getState().pendingAction?.sourcePlayer ? (
                   <p className="text-gray-400 animate-pulse">Waiting for others to respond...</p>
@@ -219,7 +223,8 @@ export default function Game() {
                       <div className="flex gap-4 justify-center">
                         <button 
                           onClick={() => useGameStore.getState().reactToAction('PASS')}
-                          className="px-6 py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-bold transition"
+                          disabled={useGameStore.getState().pendingAction?.passedPlayers?.includes(playerName)}
+                          className={`px-6 py-3 rounded-xl font-bold transition ${useGameStore.getState().pendingAction?.passedPlayers?.includes(playerName) ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-500 text-white'}`}
                         >Pass</button>
                         
                         <button 
@@ -264,25 +269,64 @@ export default function Game() {
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <div className="bg-gray-800/80 p-8 rounded-2xl border-2 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] max-w-2xl w-full">
                 <h2 className="text-3xl font-black mb-4 text-blue-400">Block Declared</h2>
-                <p className="text-xl text-white mb-8">
-                  <span className="font-bold text-green-400">{useGameStore.getState().pendingAction?.blockClaimBy}</span> blocked with 
-                  <span className="font-bold text-indigo-400 mx-2">{useGameStore.getState().pendingAction?.blockRoleClaimed}</span>
-                </p>
+                  <p className="text-xl text-white mb-6">
+                    <span className="font-bold text-green-400">{useGameStore.getState().pendingAction?.blockClaimBy}</span> blocked with 
+                    <span className="font-bold text-indigo-400 mx-2">{useGameStore.getState().pendingAction?.blockRoleClaimed}</span>
+                  </p>
+                  <div className="mb-4 text-gray-400 text-sm">
+                    {useGameStore.getState().pendingAction?.passedPlayers?.length || 0} / {Math.max(1, playersState.filter(p => p.alive).length - 1)} players passed
+                  </div>
 
-                {playerName === useGameStore.getState().pendingAction?.blockClaimBy ? (
+                  {playerName === useGameStore.getState().pendingAction?.blockClaimBy ? (
                   <p className="text-gray-400 animate-pulse">Waiting for others to respond to your block...</p>
                 ) : (
                   <div className="flex gap-4 justify-center">
-                    <button 
-                      onClick={() => useGameStore.getState().reactToAction('PASS')}
-                      className="px-6 py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-bold transition"
-                    >Pass (Allow Block)</button>
+                      <button 
+                        onClick={() => useGameStore.getState().reactToAction('PASS')}
+                        disabled={useGameStore.getState().pendingAction?.passedPlayers?.includes(playerName)}
+                        className={`px-6 py-3 rounded-xl font-bold transition ${useGameStore.getState().pendingAction?.passedPlayers?.includes(playerName) ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-gray-600 hover:bg-gray-500 text-white'}`}
+                      >Pass (Allow Block)</button>
                     
                     <button 
                       onClick={() => useGameStore.getState().reactToAction('CHALLENGE')}
                       className="px-6 py-3 bg-red-600 hover:bg-red-500 rounded-xl font-bold transition"
                     >Challenge (Liar!)</button>
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {gameStatus === 'WAITING_FOR_EXCHANGE' && useGameStore.getState().pendingAction && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <div className="bg-gray-800/80 p-8 rounded-2xl border-2 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.2)] max-w-2xl w-full">
+                <h2 className="text-3xl font-black mb-4 text-green-400">Exchange Cards</h2>
+                {useGameStore.getState().pendingAction?.playerToLoseCard === playerName ? (
+                  <>
+                    <p className="text-xl text-white mb-6">
+                      You used Merchant's Exchange. Please select <span className="font-bold text-red-400 font-mono text-2xl">1</span> card to return to the deck.
+                    </p>
+                    <p className="text-gray-400 mb-6">Select from your cards below:</p>
+                    <button 
+                      onClick={() => {
+                        if (selectedCardsToReturn.length === 1) {
+                          useGameStore.getState().returnCards(selectedCardsToReturn);
+                          setSelectedCardsToReturn([]);
+                        }
+                      }}
+                      disabled={selectedCardsToReturn.length !== 1}
+                      className={`px-8 py-3 rounded-xl font-bold text-lg transition shadow-lg
+                        ${selectedCardsToReturn.length === 1 
+                          ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-500/50' 
+                          : 'bg-gray-600 text-gray-400 cursor-not-allowed'}`}
+                    >
+                      Confirm Return ({selectedCardsToReturn.length}/1)
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-xl text-white animate-pulse">
+                    Waiting for <span className="font-bold text-green-400">{useGameStore.getState().pendingAction?.playerToLoseCard}</span> to exchange cards...
+                  </p>
                 )}
               </div>
             </div>
@@ -433,22 +477,35 @@ export default function Game() {
                           !card.revealed) {
                         useGameStore.getState().loseCard(card.id);
                       }
+                      
+                      if (gameStatus === 'WAITING_FOR_EXCHANGE' &&
+                          useGameStore.getState().pendingAction?.playerToLoseCard === playerName &&
+                          !card.revealed) {
+                        if (selectedCardsToReturn.includes(card.id)) {
+                          setSelectedCardsToReturn(prev => prev.filter(id => id !== card.id));
+                        } else if (selectedCardsToReturn.length < 1) {
+                          setSelectedCardsToReturn(prev => [...prev, card.id]);
+                        }
+                      }
                     }}
                     style={{
-                      backgroundImage: card.revealed ? 'none' : `url(/cards/${card.role.toLowerCase()}.jpg)`,
+                      backgroundImage: `url(/cards/${card.role.toLowerCase()}.jpg)`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center'
                     }}
                     className={`w-36 h-56 rounded-xl flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group border-2 transition-transform hover:-translate-y-2
                       ${card.revealed ? 'bg-gray-800 border-red-800 grayscale' : getRoleColor(card.role)}
-                      ${gameStatus === 'WAITING_FOR_LOSE_CARD' && useGameStore.getState().pendingAction?.playerToLoseCard === playerName && !card.revealed ? 'cursor-pointer border-red-500 animate-pulse hover:scale-110' : 'cursor-default'}`}
+                      ${gameStatus === 'WAITING_FOR_LOSE_CARD' && useGameStore.getState().pendingAction?.playerToLoseCard === playerName && !card.revealed ? 'cursor-pointer border-red-500 animate-pulse hover:scale-110' : ''}
+                      ${gameStatus === 'WAITING_FOR_EXCHANGE' && useGameStore.getState().pendingAction?.playerToLoseCard === playerName && !card.revealed ? 'cursor-pointer hover:scale-110 ' + (selectedCardsToReturn.includes(card.id) ? 'border-4 border-green-500 scale-105' : 'border-gray-500') : ''}
+                      ${!card.revealed && gameStatus !== 'WAITING_FOR_LOSE_CARD' && gameStatus !== 'WAITING_FOR_EXCHANGE' ? 'cursor-default' : ''}`}
                   >
                     {/* Dark overlay to make text readable if image is bright */}
                     {!card.revealed && <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>}
                     
                     {card.revealed && (
-                      <div className="absolute inset-0 bg-red-900/40 z-10 flex items-center justify-center">
-                        <span className="text-red-500 font-bold text-2xl -rotate-45 border-4 border-red-500 p-2 rounded">DEAD</span>
+                      <div className="absolute inset-0 bg-red-900/60 z-10 flex flex-col items-center justify-center gap-2">
+                        <span className="text-5xl drop-shadow-lg">💀</span>
+                        <span className="text-red-400 font-black text-2xl tracking-widest border-4 border-red-500 p-1 px-3 rounded bg-black/50">DEAD</span>
                       </div>
                     )}
                     

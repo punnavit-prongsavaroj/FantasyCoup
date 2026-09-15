@@ -40,6 +40,7 @@ interface GameState {
   winnerName: string | null;
   pendingAction: any | null;
   myHand: Card[];
+  currentSubscription: any | null;
   
   setPlayerName: (name: string) => void;
   connect: (playerName: string, autoJoinGameId?: string) => void;
@@ -49,6 +50,7 @@ interface GameState {
   takeAction: (actionType: string, targetPlayerName?: string) => void;
   reactToAction: (reactionType: string, roleClaimed?: string) => void;
   loseCard: (cardId: string) => void;
+  returnCards: (cardIds: string[]) => void;
   leaveGame: () => void;
   fetchMyHand: () => Promise<void>;
   restoreConnection: () => void;
@@ -68,6 +70,7 @@ export const useGameStore = create<GameState>()(
       winnerName: null,
       pendingAction: null,
       myHand: [],
+      currentSubscription: null,
 
       setPlayerName: (name) => set({ playerName: name }),
 
@@ -93,18 +96,25 @@ export const useGameStore = create<GameState>()(
       },
 
       disconnect: () => {
-        const { stompClient } = get();
+        const { stompClient, currentSubscription } = get();
+        if (currentSubscription) {
+          currentSubscription.unsubscribe();
+        }
         if (stompClient) {
           stompClient.deactivate();
         }
-        set({ connected: false, stompClient: null, gameId: null, players: [], playersState: [], myHand: [], winnerName: null, pendingAction: null });
+        set({ connected: false, stompClient: null, gameId: null, players: [], playersState: [], myHand: [], winnerName: null, pendingAction: null, currentSubscription: null });
       },
 
       joinGame: (gameId) => {
-        const { stompClient, playerName } = get();
+        const { stompClient, playerName, currentSubscription } = get();
         if (stompClient && stompClient.connected) {
           
-          stompClient.subscribe(`/topic/game/${gameId}`, (message) => {
+          if (currentSubscription) {
+            currentSubscription.unsubscribe();
+          }
+
+          const sub = stompClient.subscribe(`/topic/game/${gameId}`, (message) => {
             const data = JSON.parse(message.body);
             set({ 
               players: data.players || [],
@@ -116,7 +126,7 @@ export const useGameStore = create<GameState>()(
             });
             
             const state = get();
-            if (data.status === 'IN_PROGRESS' && state.myHand.length === 0) {
+            if (data.status === 'IN_PROGRESS' || data.status === 'WAITING_FOR_EXCHANGE' || data.status === 'WAITING_FOR_LOSE_CARD') {
               state.fetchMyHand();
             }
           });
@@ -126,7 +136,7 @@ export const useGameStore = create<GameState>()(
             body: JSON.stringify({ gameId, playerName }),
           });
           
-          set({ gameId });
+          set({ gameId, currentSubscription: sub });
         }
       },
 
@@ -174,8 +184,23 @@ export const useGameStore = create<GameState>()(
         }
       },
 
+      returnCards: (cardIds: string[]) => {
+        const { stompClient, gameId, playerName } = get();
+        if (stompClient && stompClient.connected && gameId) {
+          playSound('exchange'); // สามารถเปลี่ยนเป็นเสียงสลับไพ่ได้
+          stompClient.publish({
+            destination: `/app/game.returnCards`,
+            body: JSON.stringify({ gameId, playerName, cardIds }),
+          });
+        }
+      },
+
       leaveGame: () => {
-        set({ gameId: null, players: [], playersState: [], myHand: [], winnerName: null, pendingAction: null, gameStatus: 'WAITING' });
+        const { currentSubscription } = get();
+        if (currentSubscription) {
+          currentSubscription.unsubscribe();
+        }
+        set({ gameId: null, players: [], playersState: [], myHand: [], winnerName: null, pendingAction: null, gameStatus: 'WAITING', currentSubscription: null });
       },
 
       fetchMyHand: async () => {

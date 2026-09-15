@@ -62,6 +62,13 @@ public class GameWebSocketController {
         broadcastGameState(gameId);
     }
 
+    @MessageMapping("/game.returnCards")
+    public void returnCards(@Payload com.example.coup.dto.request.ReturnCardsRequest request) {
+        String gameId = request.getGameId();
+        gameService.returnCards(gameId, request.getPlayerName(), request.getCardIds());
+        broadcastGameState(gameId);
+    }
+
     private void broadcastGameState(String gameId) {
         Game game = gameService.getGame(gameId);
         if (game == null) return;
