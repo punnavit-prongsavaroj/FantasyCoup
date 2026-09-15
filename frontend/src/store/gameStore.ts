@@ -1,7 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import SockJS from 'sockjs-client/dist/sockjs';
+
+const playSound = (soundName: string) => {
+  try {
+    const audio = new Audio(`/sounds/${soundName.toLowerCase()}.wav`);
+    audio.volume = 0.6;
+    audio.play().catch(e => {
+      console.debug(`Sound not found or blocked: ${soundName}`, e);
+    });
+  } catch (error) {
+    // Ignore errors
+  }
+};
 
 export interface PlayerPublicState {
   name: string;
@@ -121,6 +133,7 @@ export const useGameStore = create<GameState>()(
       startGame: () => {
         const { stompClient, gameId, playerName } = get();
         if (stompClient && stompClient.connected && gameId) {
+          playSound('start'); // เสียงตอนเริ่มเกม
           stompClient.publish({
             destination: `/app/game.start`,
             body: JSON.stringify({ gameId, playerName }),
@@ -131,6 +144,7 @@ export const useGameStore = create<GameState>()(
       takeAction: (actionType: string, targetPlayerName?: string) => {
         const { stompClient, gameId, playerName } = get();
         if (stompClient && stompClient.connected && gameId) {
+          playSound(actionType); // เล่นเสียงตามชื่อ action
           stompClient.publish({
             destination: `/app/game.action`,
             body: JSON.stringify({ gameId, playerName, actionType, targetPlayerName }),
@@ -141,6 +155,7 @@ export const useGameStore = create<GameState>()(
       reactToAction: (reactionType: string, roleClaimed?: string) => {
         const { stompClient, gameId, playerName } = get();
         if (stompClient && stompClient.connected && gameId) {
+          playSound(reactionType); // เล่นเสียงตอนกด react (เช่น PASS, CHALLENGE, BLOCK)
           stompClient.publish({
             destination: `/app/game.react`,
             body: JSON.stringify({ gameId, playerName, reactionType, roleClaimed }),
@@ -151,6 +166,7 @@ export const useGameStore = create<GameState>()(
       loseCard: (cardId: string) => {
         const { stompClient, gameId, playerName } = get();
         if (stompClient && stompClient.connected && gameId) {
+          playSound('lose_card'); // เสียงตอนทิ้งไพ่
           stompClient.publish({
             destination: `/app/game.loseCard`,
             body: JSON.stringify({ gameId, playerName, cardId }),

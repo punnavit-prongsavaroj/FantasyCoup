@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import type { PlayerPublicState } from '../store/gameStore';
@@ -26,12 +26,40 @@ export default function Game() {
 
   const [targetAction, setTargetAction] = useState<string | null>(null);
   const [blocking, setBlocking] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (connected && gameId && players.length === 0) {
        joinGame(gameId);
     }
   }, [connected, gameId, joinGame, players.length]);
+
+  // Handle Background Music
+  useEffect(() => {
+    const audio = new Audio('/sounds/bgm.wav');
+    audio.loop = true;
+    audio.volume = 0.25; // 25% volume for BGM
+    bgmRef.current = audio;
+    
+    // Try to auto-play (browsers often block this until user interacts)
+    audio.play().catch(() => console.debug("BGM autoplay blocked waiting for interaction"));
+
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
+
+  const toggleMute = () => {
+    if (bgmRef.current) {
+      bgmRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+      if (bgmRef.current.paused && !isMuted) {
+        bgmRef.current.play().catch(() => {});
+      }
+    }
+  };
 
   if (!connected) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">Reconnecting to game...</div>;
@@ -60,6 +88,15 @@ export default function Game() {
             <p className="text-sm text-gray-400">Playing as</p>
             <p className="font-bold text-green-400">{playerName}</p>
           </div>
+          
+          <button 
+            onClick={toggleMute}
+            className="w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-lg transition shadow-sm"
+            title={isMuted ? "Unmute Music" : "Mute Music"}
+          >
+            {isMuted ? '🔇' : '🎵'}
+          </button>
+
           <button 
             onClick={() => {
               leaveGame();
