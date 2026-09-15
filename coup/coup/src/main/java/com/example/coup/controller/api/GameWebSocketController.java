@@ -1,27 +1,28 @@
 package com.example.coup.controller.api;
 
+import com.example.coup.domain.Game;
+import com.example.coup.domain.Player;
 import com.example.coup.dto.request.JoinGameRequest;
 import com.example.coup.dto.response.GameStateResponse;
+import com.example.coup.dto.response.PlayerPublicState;
+import com.example.coup.service.GameService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class GameWebSocketController {
 
     private final SimpMessagingTemplate messagingTemplate;
-    
-    // In-memory store for mockup. In production, use GameService & Database
-    private final Map<String, List<String>> gameRooms = new HashMap<>();
+    private final GameService gameService;
 
-    public GameWebSocketController(SimpMessagingTemplate messagingTemplate) {
+    public GameWebSocketController(SimpMessagingTemplate messagingTemplate, GameService gameService) {
         this.messagingTemplate = messagingTemplate;
+        this.gameService = gameService;
     }
 
     @MessageMapping("/game.join")
@@ -29,20 +30,38 @@ public class GameWebSocketController {
         String gameId = request.getGameId();
         String playerName = request.getPlayerName();
 
-        gameRooms.putIfAbsent(gameId, new ArrayList<>());
-        
-        List<String> players = gameRooms.get(gameId);
-        if (!players.contains(playerName)) {
-            players.add(playerName);
-        }
+        gameService.joinGame(gameId, playerName);
+        broadcastGameState(gameId);
+    }
+
+    @MessageMapping("/game.start")
+    public void startGame(@Payload JoinGameRequest request) { 
+        String gameId = request.getGameId();
+        gameService.startGame(gameId);
+        broadcastGameState(gameId);
+    }
+
+    private void broadcastGameState(String gameId) {
+        Game game = gameService.getGame(gameId);
+        if (game == null) return;
+
+        List<PlayerPublicState> playerStates = game.getPlayers().stream()
+            .map(p -> PlayerPublicState.builder()
+                .name(p.getName())
+                .coins(p.getCoins())
+                .cardCount(p.getHand().size())
+                .isAlive(p.isAlive())
+                .build())
+            .collect(Collectors.toList());
 
         GameStateResponse response = GameStateResponse.builder()
-                .gameId(gameId)
-                .status("WAITING")
-                .players(players)
+                .gameId(game.getGameId())
+                .status(game.getStatus())
+                .players(game.getPlayers().stream().map(Player::getName).collect(Collectors.toList()))
+                .playersState(playerStates)
+                .currentTurnPlayer(game.getCurrentPlayer() != null ? game.getCurrentPlayer().getName() : null)
                 .build();
 
-        // Broadcast to all subscribers of this game room
         messagingTemplate.convertAndSend("/topic/game/" + gameId, response);
     }
 }

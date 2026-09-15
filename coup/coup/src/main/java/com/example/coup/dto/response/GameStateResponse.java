@@ -9,5 +9,7 @@ import java.util.List;
 public class GameStateResponse {
     private String gameId;
     private String status;
-    private List<String> players;
+    private List<String> players; // Just names for Lobby
+    private List<PlayerPublicState> playersState; // Full public state for Game Board
+    private String currentTurnPlayer;
 }

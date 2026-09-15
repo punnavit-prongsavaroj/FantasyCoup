@@ -7,7 +7,8 @@ interface GameState {
   connected: boolean;
   playerName: string;
   gameId: string | null;
-  players: any[]; // Replace with proper type later
+  players: string[];
+  gameStatus: string;
   setPlayerName: (name: string) => void;
   connect: (playerName: string) => void;
   disconnect: () => void;
@@ -20,17 +21,21 @@ export const useGameStore = create<GameState>((set, get) => ({
   playerName: '',
   gameId: null,
   players: [],
+  gameStatus: 'WAITING',
 
   setPlayerName: (name) => set({ playerName: name }),
 
   connect: (playerName) => {
+    // If already connected, do nothing
+    if (get().connected) return;
+
+    // Replace with your actual backend URL when deploying
     const socket = new SockJS('http://localhost:8080/ws-game');
     const client = new Client({
       webSocketFactory: () => socket,
       debug: (str) => console.log(str),
       onConnect: () => {
         set({ connected: true, stompClient: client, playerName });
-        // Subscribe to global lobby or game-specific topics here
       },
       onStompError: (frame) => {
         console.error('Broker reported error: ' + frame.headers['message']);
@@ -45,17 +50,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { stompClient } = get();
     if (stompClient) {
       stompClient.deactivate();
-      set({ connected: false, stompClient: null });
+      set({ connected: false, stompClient: null, gameId: null, players: [] });
     }
   },
 
   joinGame: (gameId) => {
     const { stompClient, playerName } = get();
     if (stompClient && stompClient.connected) {
+      
+      // Subscribe to the game room
+      stompClient.subscribe(`/topic/game/${gameId}`, (message) => {
+        const data = JSON.parse(message.body);
+        console.log('Received Game State:', data);
+        set({ 
+          players: data.players,
+          gameStatus: data.status 
+        });
+      });
+
+      // Send join request
       stompClient.publish({
         destination: `/app/game.join`,
         body: JSON.stringify({ gameId, playerName }),
       });
+      
       set({ gameId });
     }
   },
