@@ -41,6 +41,13 @@ public class GameWebSocketController {
         broadcastGameState(gameId);
     }
 
+    @MessageMapping("/game.action")
+    public void takeAction(@Payload com.example.coup.dto.request.ActionRequest request) {
+        String gameId = request.getGameId();
+        gameService.handleAction(gameId, request.getPlayerName(), request.getActionType(), request.getTargetPlayerName());
+        broadcastGameState(gameId);
+    }
+
     private void broadcastGameState(String gameId) {
         Game game = gameService.getGame(gameId);
         if (game == null) return;
@@ -60,6 +67,7 @@ public class GameWebSocketController {
                 .players(game.getPlayers().stream().map(Player::getName).collect(Collectors.toList()))
                 .playersState(playerStates)
                 .currentTurnPlayer(game.getCurrentPlayer() != null ? game.getCurrentPlayer().getName() : null)
+                .winnerName(game.getWinnerName())
                 .build();
 
         messagingTemplate.convertAndSend("/topic/game/" + gameId, response);

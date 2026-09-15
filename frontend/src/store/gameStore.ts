@@ -7,7 +7,7 @@ export interface PlayerPublicState {
   name: string;
   coins: number;
   cardCount: number;
-  isAlive: boolean;
+  alive: boolean;
 }
 
 export interface Card {
@@ -25,6 +25,7 @@ interface GameState {
   playersState: PlayerPublicState[];
   gameStatus: string;
   currentTurnPlayer: string | null;
+  winnerName: string | null;
   myHand: Card[];
   
   setPlayerName: (name: string) => void;
@@ -32,6 +33,7 @@ interface GameState {
   disconnect: () => void;
   joinGame: (gameId: string) => void;
   startGame: () => void;
+  takeAction: (actionType: string, targetPlayerName?: string) => void;
   fetchMyHand: () => Promise<void>;
   restoreConnection: () => void;
 }
@@ -47,6 +49,7 @@ export const useGameStore = create<GameState>()(
       playersState: [],
       gameStatus: 'WAITING',
       currentTurnPlayer: null,
+      winnerName: null,
       myHand: [],
 
       setPlayerName: (name) => set({ playerName: name }),
@@ -77,7 +80,7 @@ export const useGameStore = create<GameState>()(
         if (stompClient) {
           stompClient.deactivate();
         }
-        set({ connected: false, stompClient: null, gameId: null, players: [], playersState: [], myHand: [] });
+        set({ connected: false, stompClient: null, gameId: null, players: [], playersState: [], myHand: [], winnerName: null });
       },
 
       joinGame: (gameId) => {
@@ -90,7 +93,8 @@ export const useGameStore = create<GameState>()(
               players: data.players || [],
               playersState: data.playersState || [],
               gameStatus: data.status,
-              currentTurnPlayer: data.currentTurnPlayer
+              currentTurnPlayer: data.currentTurnPlayer,
+              winnerName: data.winnerName
             });
             
             const state = get();
@@ -114,6 +118,16 @@ export const useGameStore = create<GameState>()(
           stompClient.publish({
             destination: `/app/game.start`,
             body: JSON.stringify({ gameId, playerName }),
+          });
+        }
+      },
+
+      takeAction: (actionType: string, targetPlayerName?: string) => {
+        const { stompClient, gameId, playerName } = get();
+        if (stompClient && stompClient.connected && gameId) {
+          stompClient.publish({
+            destination: `/app/game.action`,
+            body: JSON.stringify({ gameId, playerName, actionType, targetPlayerName }),
           });
         }
       },

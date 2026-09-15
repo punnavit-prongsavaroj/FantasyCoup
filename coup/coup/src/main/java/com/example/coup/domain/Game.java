@@ -69,6 +69,13 @@ public class Game {
     }
 
     public void nextTurn() {
+        long aliveCount = players.stream().filter(Player::isAlive).count();
+        if (aliveCount <= 1) {
+            this.status = "FINISHED";
+            players.stream().filter(Player::isAlive).findFirst().ifPresent(p -> this.winnerName = p.getName());
+            return;
+        }
+
         do {
             currentTurnIndex = (currentTurnIndex + 1) % players.size();
         } while (!players.get(currentTurnIndex).isAlive());

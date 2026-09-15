@@ -12,4 +12,5 @@ public class GameStateResponse {
     private List<String> players; // Just names for Lobby
     private List<PlayerPublicState> playersState; // Full public state for Game Board
     private String currentTurnPlayer;
+    private String winnerName;
 }

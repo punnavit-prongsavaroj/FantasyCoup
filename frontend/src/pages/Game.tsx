@@ -79,13 +79,13 @@ export default function Game() {
                 <li key={index} className={`flex flex-col p-3 rounded-lg border ${
                     currentTurnPlayer === player.name ? 'bg-indigo-900/40 border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]' :
                     player.name === playerName ? 'bg-gray-700/80 border-gray-500' : 'bg-gray-800 border-gray-700'
-                  } ${!player.isAlive && 'opacity-50'}`}>
+                  } ${!player.alive && 'opacity-50'}`}>
                   
                   <div className="flex justify-between items-center mb-2">
                     <span className={`font-bold ${player.name === playerName ? 'text-green-400' : 'text-gray-200'}`}>
                       {player.name} {player.name === playerName && '(You)'}
                     </span>
-                    {!player.isAlive && <span className="text-xs text-red-400 font-bold uppercase">Dead</span>}
+                    {!player.alive && <span className="text-xs text-red-400 font-bold uppercase">Dead</span>}
                   </div>
                   
                   <div className="flex justify-between text-xs text-gray-400">
@@ -138,14 +138,116 @@ export default function Game() {
             </div>
           )}
 
+          {gameStatus === 'FINISHED' && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <h1 className="text-6xl font-black mb-4 text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">GAME OVER</h1>
+              <p className="text-3xl text-white mb-8">
+                Winner: <span className="font-bold text-green-400">{useGameStore.getState().winnerName}</span>
+              </p>
+              <button 
+                onClick={() => window.location.href = '/lobby'}
+                className="px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold text-xl transition shadow-lg"
+              >
+                Back to Lobby
+              </button>
+            </div>
+          )}
+
           {gameStatus === 'IN_PROGRESS' && (
             <>
               {/* Center Board (Actions / Logs) */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center opacity-30">
-                  <h1 className="text-5xl font-bold mb-2">Fantasy Coup</h1>
-                  <p>Action logs and prompts will appear here.</p>
-                </div>
+              <div className="flex-1 flex flex-col items-center justify-center mb-48">
+                {currentTurnPlayer === playerName ? (
+                  <div className="bg-gray-800/80 p-8 rounded-2xl border-2 border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.2)] text-center w-full max-w-2xl">
+                    <h2 className="text-3xl font-black mb-6 text-white tracking-widest uppercase">Your Turn</h2>
+                    <p className="text-gray-400 mb-6">Choose an action to perform</p>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {/* Basic Actions */}
+                      <button 
+                        onClick={() => useGameStore.getState().takeAction('INCOME')}
+                        className="p-3 bg-gray-700 hover:bg-gray-600 border border-gray-500 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
+                      >
+                        <span className="text-xl">🪙</span>
+                        <span className="font-bold text-gray-200 group-hover:text-white text-sm">Income</span>
+                        <span className="text-xs text-green-400">+1 Coin</span>
+                      </button>
+                      
+                      <button 
+                        onClick={() => useGameStore.getState().takeAction('FOREIGN_AID')}
+                        className="p-3 bg-gray-700 hover:bg-gray-600 border border-gray-500 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
+                      >
+                        <span className="text-xl">💰</span>
+                        <span className="font-bold text-gray-200 group-hover:text-white text-sm">Foreign Aid</span>
+                        <span className="text-xs text-green-400">+2 Coins</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          const target = prompt("Enter target player name to Coup:");
+                          if (target) useGameStore.getState().takeAction('COUP', target);
+                        }}
+                        className="p-3 bg-red-900/40 hover:bg-red-800/60 border border-red-500/50 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
+                      >
+                        <span className="text-xl">⚔️</span>
+                        <span className="font-bold text-red-200 group-hover:text-white text-sm">Coup</span>
+                        <span className="text-xs text-red-400">-7 Coins (Kill 1)</span>
+                      </button>
+
+                      {/* Character Actions */}
+                      <button 
+                        onClick={() => useGameStore.getState().takeAction('TAX')}
+                        className="p-3 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/50 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
+                      >
+                        <span className="text-xl">👑</span>
+                        <span className="font-bold text-purple-200 group-hover:text-white text-sm">Tax (King)</span>
+                        <span className="text-xs text-green-400">+3 Coins</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          const target = prompt("Enter target player name to Assassinate:");
+                          if (target) useGameStore.getState().takeAction('ASSASSINATE', target);
+                        }}
+                        className="p-3 bg-red-900/40 hover:bg-red-800/60 border border-red-500/50 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
+                      >
+                        <span className="text-xl">🗡️</span>
+                        <span className="font-bold text-red-200 group-hover:text-white text-sm">Assassinate</span>
+                        <span className="text-xs text-red-400">-3 Coins</span>
+                      </button>
+
+                      <button 
+                        onClick={() => {
+                          const target = prompt("Enter target player name to Steal from:");
+                          if (target) useGameStore.getState().takeAction('STEAL', target);
+                        }}
+                        className="p-3 bg-blue-900/40 hover:bg-blue-800/60 border border-blue-500/50 rounded-xl transition flex flex-col items-center justify-center gap-1 group"
+                      >
+                        <span className="text-xl">🥷</span>
+                        <span className="font-bold text-blue-200 group-hover:text-white text-sm">Steal (Adv.)</span>
+                        <span className="text-xs text-green-400">+2 Coins from Target</span>
+                      </button>
+
+                      <button 
+                        onClick={() => useGameStore.getState().takeAction('EXCHANGE')}
+                        className="p-3 bg-green-900/40 hover:bg-green-800/60 border border-green-500/50 rounded-xl transition flex flex-col items-center justify-center gap-1 group md:col-start-2"
+                      >
+                        <span className="text-xl">📜</span>
+                        <span className="font-bold text-green-200 group-hover:text-white text-sm">Exchange</span>
+                        <span className="text-xs text-green-400">Swap Cards</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center opacity-50">
+                    <h1 className="text-5xl font-bold mb-4 text-gray-400">Waiting for {currentTurnPlayer}</h1>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-3 h-3 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Player's Cards Area (Bottom) */}
