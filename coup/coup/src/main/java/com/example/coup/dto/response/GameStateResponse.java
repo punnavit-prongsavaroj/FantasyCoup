@@ -13,4 +13,5 @@ public class GameStateResponse {
     private List<PlayerPublicState> playersState; // Full public state for Game Board
     private String currentTurnPlayer;
     private String winnerName;
+    private com.example.coup.domain.PendingAction pendingAction;
 }

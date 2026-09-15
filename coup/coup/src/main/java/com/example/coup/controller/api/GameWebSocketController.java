@@ -48,6 +48,20 @@ public class GameWebSocketController {
         broadcastGameState(gameId);
     }
 
+    @MessageMapping("/game.react")
+    public void reactToAction(@Payload com.example.coup.dto.request.ReactionRequest request) {
+        String gameId = request.getGameId();
+        gameService.handleReaction(gameId, request.getPlayerName(), request.getReactionType(), request.getRoleClaimed());
+        broadcastGameState(gameId);
+    }
+
+    @MessageMapping("/game.loseCard")
+    public void loseCard(@Payload com.example.coup.dto.request.LoseCardRequest request) {
+        String gameId = request.getGameId();
+        gameService.loseCard(gameId, request.getPlayerName(), request.getCardId());
+        broadcastGameState(gameId);
+    }
+
     private void broadcastGameState(String gameId) {
         Game game = gameService.getGame(gameId);
         if (game == null) return;
@@ -68,6 +82,7 @@ public class GameWebSocketController {
                 .playersState(playerStates)
                 .currentTurnPlayer(game.getCurrentPlayer() != null ? game.getCurrentPlayer().getName() : null)
                 .winnerName(game.getWinnerName())
+                .pendingAction(game.getPendingAction())
                 .build();
 
         messagingTemplate.convertAndSend("/topic/game/" + gameId, response);

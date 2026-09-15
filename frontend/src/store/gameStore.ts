@@ -26,6 +26,7 @@ interface GameState {
   gameStatus: string;
   currentTurnPlayer: string | null;
   winnerName: string | null;
+  pendingAction: any | null;
   myHand: Card[];
   
   setPlayerName: (name: string) => void;
@@ -34,6 +35,9 @@ interface GameState {
   joinGame: (gameId: string) => void;
   startGame: () => void;
   takeAction: (actionType: string, targetPlayerName?: string) => void;
+  reactToAction: (reactionType: string, roleClaimed?: string) => void;
+  loseCard: (cardId: string) => void;
+  leaveGame: () => void;
   fetchMyHand: () => Promise<void>;
   restoreConnection: () => void;
 }
@@ -50,6 +54,7 @@ export const useGameStore = create<GameState>()(
       gameStatus: 'WAITING',
       currentTurnPlayer: null,
       winnerName: null,
+      pendingAction: null,
       myHand: [],
 
       setPlayerName: (name) => set({ playerName: name }),
@@ -80,7 +85,7 @@ export const useGameStore = create<GameState>()(
         if (stompClient) {
           stompClient.deactivate();
         }
-        set({ connected: false, stompClient: null, gameId: null, players: [], playersState: [], myHand: [], winnerName: null });
+        set({ connected: false, stompClient: null, gameId: null, players: [], playersState: [], myHand: [], winnerName: null, pendingAction: null });
       },
 
       joinGame: (gameId) => {
@@ -94,7 +99,8 @@ export const useGameStore = create<GameState>()(
               playersState: data.playersState || [],
               gameStatus: data.status,
               currentTurnPlayer: data.currentTurnPlayer,
-              winnerName: data.winnerName
+              winnerName: data.winnerName,
+              pendingAction: data.pendingAction
             });
             
             const state = get();
@@ -130,6 +136,30 @@ export const useGameStore = create<GameState>()(
             body: JSON.stringify({ gameId, playerName, actionType, targetPlayerName }),
           });
         }
+      },
+
+      reactToAction: (reactionType: string, roleClaimed?: string) => {
+        const { stompClient, gameId, playerName } = get();
+        if (stompClient && stompClient.connected && gameId) {
+          stompClient.publish({
+            destination: `/app/game.react`,
+            body: JSON.stringify({ gameId, playerName, reactionType, roleClaimed }),
+          });
+        }
+      },
+
+      loseCard: (cardId: string) => {
+        const { stompClient, gameId, playerName } = get();
+        if (stompClient && stompClient.connected && gameId) {
+          stompClient.publish({
+            destination: `/app/game.loseCard`,
+            body: JSON.stringify({ gameId, playerName, cardId }),
+          });
+        }
+      },
+
+      leaveGame: () => {
+        set({ gameId: null, players: [], playersState: [], myHand: [], winnerName: null, pendingAction: null, gameStatus: 'WAITING' });
       },
 
       fetchMyHand: async () => {

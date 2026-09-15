@@ -12,9 +12,10 @@ public class Game {
     private String gameId;
     private List<Player> players;
     private List<Card> deck;
-    private String status; // WAITING, IN_PROGRESS, FINISHED
+    private String status; // WAITING, IN_PROGRESS, ACTION_PENDING, BLOCK_PENDING, WAITING_FOR_LOSE_CARD, FINISHED
     private int currentTurnIndex;
     private String winnerName;
+    private PendingAction pendingAction;
 
     public Game(String gameId) {
         this.gameId = gameId;
