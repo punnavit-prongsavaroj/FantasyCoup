@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 
@@ -6,6 +6,12 @@ export default function Home() {
   const { connected, connect, playerName } = useGameStore();
   const [inputName, setInputName] = useState(playerName || '');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (connected) {
+      navigate('/lobby');
+    }
+  }, [connected, navigate]);
 
   const handleConnect = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +22,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900 text-white font-sans">
       <div className="bg-gray-800 p-8 rounded-xl shadow-2xl max-w-md w-full text-center border border-gray-700">
         <h1 className="text-4xl font-bold mb-2 text-indigo-400">Fantasy Coup</h1>
         <p className="text-gray-400 mb-6">Deception and manipulation await.</p>

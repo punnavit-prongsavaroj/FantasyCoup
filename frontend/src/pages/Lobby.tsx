@@ -8,11 +8,7 @@ export default function Lobby() {
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState('');
 
-  useEffect(() => {
-    if (!connected || !playerName) {
-      navigate('/');
-    }
-  }, [connected, playerName, navigate]);
+  // Removed strict redirect since App.tsx handles routing and restoring connection
 
   const handleCreateGame = () => {
     // Usually we would make a POST request to backend to create a game,
