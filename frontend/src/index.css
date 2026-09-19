@@ -1,1 +1,625 @@
 @import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════
+   MEDIEVAL FANTASY DESIGN TOKENS
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* Surfaces */
+  --wood-dark: #22150B;
+  --wood: #3E2716;
+  --wood-light: #5C3B21;
+  --parchment: #EBDCB8;
+  --parchment-aged: #C9B48A;
+  --velvet: #4A1111;
+  --velvet-light: #6E1B1B;
+
+  /* Metals */
+  --gold: #B8860B;
+  --gold-light: #E8B44A;
+  --brass: #D9B36C;
+  --iron: #3A2410;
+
+  /* Elements */
+  --ember: #A62121;
+  --ember-light: #D94F3D;
+  --forest: #2E6B34;
+  --water: #1F5C8B;
+  --arcane: #5B3A8F;
+
+  /* Text */
+  --ink: #2B1A0E;
+  --ink-light: #4A3117;
+  --text-on-dark: #FFF1CE;
+
+  /* FX */
+  --torch-glow: rgba(255, 170, 70, .45);
+  --shadow-warm: rgba(43, 26, 14, .6);
+  --radius: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BODY — OAK WOOD TEXTURE
+   ═══════════════════════════════════════════════════════════════ */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Noto Sans Thai', 'Cinzel', serif;
+  color: var(--text-on-dark);
+  background:
+    repeating-linear-gradient(
+      92deg,
+      rgba(60, 35, 15, .12) 0px,
+      transparent 2px,
+      transparent 6px,
+      rgba(60, 35, 15, .08) 8px
+    ),
+    repeating-linear-gradient(
+      88deg,
+      rgba(80, 50, 20, .10) 0px,
+      transparent 3px,
+      transparent 8px,
+      rgba(80, 50, 20, .06) 10px
+    ),
+    radial-gradient(ellipse at 30% 20%, #4A3017 0%, #3E2716 40%, #22150B 100%);
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIGNETTE OVERLAY
+   ═══════════════════════════════════════════════════════════════ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  box-shadow: inset 0 0 200px 60px rgba(0, 0, 0, .7);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBAR — WOOD / BRASS
+   ═══════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--wood-dark);
+  border-left: 1px solid var(--iron);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, var(--brass), var(--gold));
+  border-radius: 4px;
+  border: 1px solid var(--iron);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, var(--gold-light), var(--brass));
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brass) var(--wood-dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOCUS STATES — GOLD OUTLINE
+   ═══════════════════════════════════════════════════════════════ */
+*:focus-visible {
+  outline: 2px solid var(--gold-light) !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--torch-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TORCH FLICKER ANIMATION
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes torch-flicker {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  25% { opacity: 0.55; transform: scaleY(1.04); }
+  50% { opacity: 0.35; transform: scaleY(0.97); }
+  75% { opacity: 0.5; transform: scaleY(1.02); }
+}
+
+@keyframes torch-glow-pulse {
+  0%, 100% { box-shadow: 0 0 40px 15px rgba(255, 140, 40, .15), 0 0 80px 30px rgba(255, 100, 20, .08); }
+  50% { box-shadow: 0 0 50px 20px rgba(255, 140, 40, .22), 0 0 100px 40px rgba(255, 100, 20, .12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes torch-flicker { 0%, 100% { opacity: 0.45; transform: none; } }
+  @keyframes torch-glow-pulse { 0%, 100% { box-shadow: 0 0 40px 15px rgba(255, 140, 40, .15); } }
+  .torch-flame { animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TORCHES — LEFT AND RIGHT SIDE
+   ═══════════════════════════════════════════════════════════════ */
+.torch-left,
+.torch-right {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 80px;
+  z-index: 10;
+  pointer-events: none;
+}
+.torch-left { left: 8px; }
+.torch-right { right: 8px; }
+
+.torch-flame {
+  width: 20px;
+  height: 35px;
+  margin: 0 auto;
+  background: radial-gradient(ellipse at center bottom, #FFD700 0%, #FF8C00 40%, #FF4500 70%, transparent 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: torch-flicker 2s ease-in-out infinite;
+  filter: blur(1px);
+}
+
+.torch-handle {
+  width: 8px;
+  height: 45px;
+  margin: 0 auto;
+  background: linear-gradient(to bottom, var(--wood-light), var(--wood-dark));
+  border-radius: 0 0 3px 3px;
+  border: 1px solid var(--iron);
+}
+
+.torch-glow-effect {
+  position: fixed;
+  top: 30%;
+  width: 120px;
+  height: 300px;
+  border-radius: 50%;
+  animation: torch-glow-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+.torch-glow-effect.left { left: -40px; }
+.torch-glow-effect.right { right: -40px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD BACK — CSS-ONLY DESIGN
+   ═══════════════════════════════════════════════════════════════ */
+.card-back {
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(27, 54, 93, .15) 0px,
+      transparent 2px,
+      transparent 8px,
+      rgba(27, 54, 93, .10) 10px
+    ),
+    linear-gradient(160deg, #1a2a4a 0%, #0f1a30 60%, #0a1020 100%);
+  border: 2px solid var(--brass);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, .15),
+    0 4px 12px var(--shadow-warm);
+}
+
+.card-back::before {
+  content: '⚜';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(184, 134, 11, .4);
+  z-index: 2;
+}
+
+.card-back::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(217, 178, 108, .3);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARD (REVEALED) — PARCHMENT WITH ROLE IMAGE
+   ═══════════════════════════════════════════════════════════════ */
+.card-revealed {
+  position: relative;
+  border: 2px solid var(--brass);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, .2),
+    0 4px 12px var(--shadow-warm);
+}
+
+.card-dead-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(74, 17, 17, .7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PARCHMENT PANEL
+   ═══════════════════════════════════════════════════════════════ */
+.panel-parchment {
+  background: linear-gradient(160deg, var(--parchment), var(--parchment-aged));
+  border: 3px solid var(--brass);
+  border-radius: var(--radius);
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, .3),
+    0 8px 24px var(--shadow-warm);
+  position: relative;
+}
+
+/* Aging stain */
+.panel-parchment::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(160, 120, 60, .3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(140, 100, 40, .2) 0%, transparent 40%);
+  opacity: 0.3;
+  pointer-events: none;
+  border-radius: var(--radius);
+}
+
+/* Iron studs on corners */
+.panel-parchment::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #F3DCA9 20%, #7A5A2A 100%);
+  box-shadow:
+    calc(100% - 17px) 0 0 0 #F3DCA9,
+    0 calc(100% - 17px) 0 0 #F3DCA9,
+    calc(100% - 17px) calc(100% - 17px) 0 0 #F3DCA9;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WOOD PLANK BUTTON
+   ═══════════════════════════════════════════════════════════════ */
+.btn-wood {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(to bottom, var(--wood-light), var(--wood));
+  border: 2px solid var(--brass);
+  border-radius: var(--radius);
+  color: var(--text-on-dark);
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 var(--wood-dark),
+    0 6px 12px var(--shadow-warm);
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+.btn-wood:hover {
+  background: linear-gradient(to bottom, #6E4B2B, var(--wood-light));
+}
+
+.btn-wood:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 var(--wood-dark),
+    0 2px 6px var(--shadow-warm);
+}
+
+.btn-wood:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Velvet button variant (for danger/action) */
+.btn-velvet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(to bottom, var(--velvet-light), var(--velvet));
+  border: 2px solid var(--ember);
+  border-radius: var(--radius);
+  color: var(--text-on-dark);
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 #2a0808,
+    0 6px 12px var(--shadow-warm);
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+.btn-velvet:hover {
+  background: linear-gradient(to bottom, #8a2222, var(--velvet-light));
+}
+
+.btn-velvet:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 #2a0808,
+    0 2px 6px var(--shadow-warm);
+}
+
+/* Arcane button variant (for character actions) */
+.btn-arcane {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(to bottom, #6b449f, var(--arcane));
+  border: 2px solid #8b6abf;
+  border-radius: var(--radius);
+  color: var(--text-on-dark);
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 #2d1a4f,
+    0 6px 12px var(--shadow-warm);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-arcane:hover {
+  background: linear-gradient(to bottom, #7b54af, #6b449f);
+}
+
+.btn-arcane:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 #2d1a4f,
+    0 2px 6px var(--shadow-warm);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MEDIEVAL INPUT
+   ═══════════════════════════════════════════════════════════════ */
+.input-parchment {
+  background: linear-gradient(160deg, var(--parchment-aged), var(--parchment));
+  border: 2px solid var(--brass);
+  border-radius: var(--radius);
+  color: var(--ink);
+  caret-color: var(--ink);
+  padding: 10px 16px;
+  box-shadow: inset 0 2px 4px var(--shadow-warm);
+  font-family: 'Noto Sans Thai', serif;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-parchment::placeholder {
+  color: var(--ink-light);
+  opacity: 0.6;
+}
+
+.input-parchment:focus {
+  border-color: var(--gold-light);
+  box-shadow: inset 0 2px 4px var(--shadow-warm), 0 0 8px var(--torch-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GOLD DIVIDER
+   ═══════════════════════════════════════════════════════════════ */
+.divider-gold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.divider-gold .line {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--brass), transparent);
+}
+.divider-gold .ornament {
+  color: var(--brass);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND TABLE
+   ═══════════════════════════════════════════════════════════════ */
+.game-table-container {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 140px);
+  min-height: 500px;
+  overflow: visible;
+}
+
+.round-table {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(380px, 35vw);
+  height: min(380px, 35vw);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 40% 35%, rgba(110, 80, 40, .3) 0%, transparent 60%),
+    radial-gradient(ellipse at center, #2a5030 0%, #1e3d25 40%, #15291a 80%, #0d1a10 100%);
+  border: 6px solid var(--wood-dark);
+  box-shadow:
+    inset 0 0 60px rgba(0, 0, 0, .4),
+    0 0 0 3px var(--brass),
+    0 0 0 6px var(--wood-dark),
+    0 12px 40px rgba(0, 0, 0, .6);
+}
+
+.table-center-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 80%;
+  z-index: 10;
+}
+
+.opponent-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  transition: z-index 0.2s;
+}
+
+.opponent-seat:hover {
+  z-index: 60;
+}
+
+.player-self-area {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 50;
+  padding-bottom: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OPPONENT CARD SIZES
+   ═══════════════════════════════════════════════════════════════ */
+.opponent-card {
+  width: 60px;
+  height: 90px;
+  font-size: 14px;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.2s, box-shadow 0.2s;
+  z-index: 1;
+  position: relative; /* Need position relative for z-index to work */
+  cursor: pointer;
+}
+
+.opponent-card:hover {
+  transform: scale(1.4) translateY(-8px);
+  z-index: 100;
+  box-shadow: 0 12px 24px var(--shadow-warm);
+}
+
+.opponent-card .card-back::before {
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PLAYER NAME TAG
+   ═══════════════════════════════════════════════════════════════ */
+.player-nametag {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  background: linear-gradient(to bottom, var(--wood-light), var(--wood));
+  border: 1px solid var(--brass);
+  color: var(--text-on-dark);
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-nametag.is-turn {
+  background: linear-gradient(to bottom, var(--gold-light), var(--gold));
+  color: var(--ink);
+  box-shadow: 0 0 10px var(--torch-glow);
+  text-shadow: none;
+}
+
+.player-nametag.is-dead {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PLAYER COINS BADGE
+   ═══════════════════════════════════════════════════════════════ */
+.coins-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, var(--gold-light), var(--gold));
+  color: var(--ink);
+  border: 1px solid var(--brass);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SELF CARDS — LARGER, GOLD FRAME
+   ═══════════════════════════════════════════════════════════════ */
+.self-card {
+  width: 90px;
+  height: 135px;
+  position: relative;
+  border: 3px solid var(--brass);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, .2),
+    0 6px 20px var(--shadow-warm);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), z-index 0.2s, box-shadow 0.2s;
+  z-index: 1;
+  transform-origin: bottom center;
+}
+
+.self-card:hover {
+  transform: scale(1.6) translateY(-16px);
+  z-index: 100;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, .2),
+    0 20px 40px rgba(0, 0, 0, 0.8),
+    0 0 20px var(--torch-glow);
+}
+
+.self-card.selectable {
+  border-color: var(--ember-light);
+  animation: pulse-border 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--ember-light); box-shadow: 0 0 10px rgba(217, 79, 61, .3); }
+  50% { border-color: var(--gold-light); box-shadow: 0 0 20px rgba(232, 180, 74, .4); }
+}
+
+.self-card.selected {
+  border-color: var(--forest);
+  border-width: 4px;
+  box-shadow: 0 0 15px rgba(46, 107, 52, .5);
+}

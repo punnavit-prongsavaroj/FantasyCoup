@@ -259,4 +259,35 @@ public class GameService {
             }
         }
     }
+
+    public void leaveGame(String gameId, String playerName) {
+        Game game = getGame(gameId);
+        if (game == null) return;
+
+        if (game.getStatus().equals("WAITING")) {
+            game.getPlayers().removeIf(p -> p.getName().equals(playerName));
+        } else {
+            com.example.coup.domain.Player p = game.getPlayerByName(playerName).orElse(null);
+            if (p != null && p.isAlive()) {
+                p.getHand().forEach(c -> c.setRevealed(true));
+                p.checkAliveStatus();
+                
+                if (game.getPendingAction() != null && game.getPendingAction().getPlayerToLoseCard() != null 
+                    && game.getPendingAction().getPlayerToLoseCard().equals(playerName)) {
+                    game.setPendingAction(null);
+                    game.setStatus("IN_PROGRESS");
+                }
+                
+                if (!game.getCurrentPlayer().isAlive()) {
+                    game.nextTurn();
+                } else {
+                    long aliveCount = game.getPlayers().stream().filter(com.example.coup.domain.Player::isAlive).count();
+                    if (aliveCount <= 1) {
+                        game.setStatus("FINISHED");
+                        game.getPlayers().stream().filter(com.example.coup.domain.Player::isAlive).findFirst().ifPresent(winner -> game.setWinnerName(winner.getName()));
+                    }
+                }
+            }
+        }
+    }
 }
