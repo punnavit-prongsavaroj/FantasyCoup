@@ -26,10 +26,17 @@ public class GameService {
 
     public void saveGame(Game game) {
         if (game != null) {
-            GameEntity entity = new GameEntity();
-            entity.setId(game.getGameId());
-            entity.setGameState(game);
-            gameRepository.save(entity);
+            System.out.println(">>> DEBUG: Triggering saveGame for Game ID: " + game.getGameId());
+            try {
+                GameEntity entity = new GameEntity();
+                entity.setId(game.getGameId());
+                entity.setGameState(game);
+                gameRepository.save(entity);
+                System.out.println(">>> DEBUG: Successfully saved to DB!");
+            } catch (Exception e) {
+                System.out.println(">>> DEBUG ERROR: Failed to save game to DB!");
+                e.printStackTrace();
+            }
         }
     }
 
