@@ -2,33 +2,55 @@ package com.example.coup.service;
 
 import com.example.coup.domain.Game;
 import org.springframework.stereotype.Service;
-import java.util.HashMap;
+import com.example.coup.entity.GameEntity;
+import com.example.coup.repository.GameRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Optional;
 import java.util.Map;
 
 @Service
 public class GameService {
     
-    // In-memory DB for games
-    private final Map<String, Game> games = new HashMap<>();
+    @Autowired
+    private GameRepository gameRepository;
 
     public Game getOrCreateGame(String gameId) {
-        return games.computeIfAbsent(gameId, Game::new);
+        return gameRepository.findById(gameId)
+                .map(GameEntity::getGameState)
+                .orElseGet(() -> {
+                    Game newGame = new Game(gameId);
+                    saveGame(newGame);
+                    return newGame;
+                });
+    }
+
+    public void saveGame(Game game) {
+        if (game != null) {
+            GameEntity entity = new GameEntity();
+            entity.setId(game.getGameId());
+            entity.setGameState(game);
+            gameRepository.save(entity);
+        }
     }
 
     public Game getGame(String gameId) {
-        return games.get(gameId);
+        return gameRepository.findById(gameId)
+                .map(GameEntity::getGameState)
+                .orElse(null);
     }
 
     public void joinGame(String gameId, String playerName) {
         Game game = getOrCreateGame(gameId);
         game.addPlayer(playerName);
+        saveGame(game);
     }
 
     public void startGame(String gameId) {
         Game game = getGame(gameId);
         if (game != null && game.getStatus().equals("WAITING")) {
             game.startGame();
-        }
+            saveGame(game);
+    }
     }
 
     public void handleAction(String gameId, String playerName, com.example.coup.domain.enums.ActionType actionType, String targetName) {
@@ -43,6 +65,7 @@ public class GameService {
         if (actionType == com.example.coup.domain.enums.ActionType.INCOME) {
             player.addCoins(1);
             game.nextTurn();
+            saveGame(game);
             return;
         }
 
@@ -52,6 +75,7 @@ public class GameService {
                 game.setPendingAction(new com.example.coup.domain.PendingAction(actionType, playerName, targetName));
                 game.getPendingAction().setPlayerToLoseCard(targetName);
                 game.setStatus("WAITING_FOR_LOSE_CARD");
+                saveGame(game);
             }
             return;
         }
@@ -71,6 +95,7 @@ public class GameService {
 
         game.setPendingAction(new com.example.coup.domain.PendingAction(actionType, playerName, targetName));
         game.setStatus("ACTION_PENDING");
+        saveGame(game);
     }
 
     public void handleReaction(String gameId, String playerName, com.example.coup.domain.enums.ReactionType reactionType, String roleClaimed) {
@@ -143,6 +168,7 @@ public class GameService {
                 }
             }
         }
+        saveGame(game);
     }
 
     private String getRequiredRoleForAction(com.example.coup.domain.enums.ActionType actionType) {
@@ -234,7 +260,8 @@ public class GameService {
                 game.setPendingAction(null);
                 game.setStatus("IN_PROGRESS");
                 game.nextTurn();
-            }
+                saveGame(game);
+    }
         }
     }
 
@@ -250,7 +277,8 @@ public class GameService {
                     if (cardToReturn != null) {
                         p.getHand().remove(cardToReturn);
                         game.getDeck().add(cardToReturn);
-                    }
+                        saveGame(game);
+    }
                 }
                 java.util.Collections.shuffle(game.getDeck());
                 game.setPendingAction(null);
@@ -266,7 +294,8 @@ public class GameService {
 
         if (game.getStatus().equals("WAITING")) {
             game.getPlayers().removeIf(p -> p.getName().equals(playerName));
-        } else {
+            saveGame(game);
+    } else {
             com.example.coup.domain.Player p = game.getPlayerByName(playerName).orElse(null);
             if (p != null && p.isAlive()) {
                 p.getHand().forEach(c -> c.setRevealed(true));
