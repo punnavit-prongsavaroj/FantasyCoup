@@ -19,7 +19,9 @@ export interface PlayerPublicState {
   name: string;
   coins: number;
   cardCount: number;
+  totalCards: number;
   alive: boolean;
+  revealedCards: string[];
 }
 
 export interface Card {
@@ -196,7 +198,13 @@ export const useGameStore = create<GameState>()(
       },
 
       leaveGame: () => {
-        const { currentSubscription } = get();
+        const { stompClient, gameId, playerName, currentSubscription } = get();
+        if (stompClient && stompClient.connected && gameId) {
+          stompClient.publish({
+            destination: `/app/game.leave`,
+            body: JSON.stringify({ gameId, playerName }),
+          });
+        }
         if (currentSubscription) {
           currentSubscription.unsubscribe();
         }

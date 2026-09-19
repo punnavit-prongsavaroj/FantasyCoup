@@ -41,6 +41,14 @@ public class GameWebSocketController {
         broadcastGameState(gameId);
     }
 
+    @MessageMapping("/game.leave")
+    public void leaveGame(@Payload JoinGameRequest request) {
+        String gameId = request.getGameId();
+        String playerName = request.getPlayerName();
+        gameService.leaveGame(gameId, playerName);
+        broadcastGameState(gameId);
+    }
+
     @MessageMapping("/game.action")
     public void takeAction(@Payload com.example.coup.dto.request.ActionRequest request) {
         String gameId = request.getGameId();
@@ -77,8 +85,13 @@ public class GameWebSocketController {
             .map(p -> PlayerPublicState.builder()
                 .name(p.getName())
                 .coins(p.getCoins())
-                .cardCount(p.getHand().size())
+                .cardCount((int) p.getHand().stream().filter(c -> !c.isRevealed()).count())
+                .totalCards(p.getHand().size())
                 .isAlive(p.isAlive())
+                .revealedCards(p.getHand().stream()
+                    .filter(com.example.coup.domain.Card::isRevealed)
+                    .map(c -> c.getRole().name())
+                    .collect(Collectors.toList()))
                 .build())
             .collect(Collectors.toList());
 
