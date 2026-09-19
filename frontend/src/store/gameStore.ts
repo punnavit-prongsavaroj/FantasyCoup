@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
 const playSound = (soundName: string) => {
   try {
     const audio = new Audio(`/sounds/${soundName.toLowerCase()}.wav`);
@@ -79,7 +81,7 @@ export const useGameStore = create<GameState>()(
       connect: (playerName, autoJoinGameId) => {
         if (get().connected) return;
 
-        const socket = new SockJS('http://localhost:8080/ws-game');
+        const socket = new SockJS(`${API_URL}/ws-game`);
         const client = new Client({
           webSocketFactory: () => socket,
           debug: (str) => console.log(str),
@@ -216,7 +218,7 @@ export const useGameStore = create<GameState>()(
         if (!gameId || !playerName) return;
 
         try {
-          const response = await fetch(`http://localhost:8080/api/game/${gameId}/player/${playerName}/hand`);
+          const response = await fetch(`${API_URL}/api/game/${gameId}/player/${playerName}/hand`);
           if (response.ok) {
             const data = await response.json();
             set({ myHand: data });

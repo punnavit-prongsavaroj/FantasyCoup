@@ -4,7 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { Users, Plus, LogOut } from 'lucide-react';
 
 export default function Lobby() {
-  const { connected, playerName, disconnect, joinGame } = useGameStore();
+  const { playerName, disconnect, joinGame } = useGameStore();
   const navigate = useNavigate();
   const [roomCode, setRoomCode] = useState('');
 

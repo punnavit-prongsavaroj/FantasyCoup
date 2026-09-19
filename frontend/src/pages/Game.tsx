@@ -115,7 +115,7 @@ export default function Game() {
   const { 
     connected, playerName, players, playersState, 
     gameStatus, currentTurnPlayer, myHand, 
-    joinGame, startGame, leaveGame
+    startGame, leaveGame
   } = useGameStore();
 
   const [targetAction, setTargetAction] = useState<string | null>(null);
