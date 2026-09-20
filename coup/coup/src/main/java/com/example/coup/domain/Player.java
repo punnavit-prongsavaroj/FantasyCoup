@@ -2,11 +2,13 @@ package com.example.coup.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Player {
     private String name;
     private int coins;

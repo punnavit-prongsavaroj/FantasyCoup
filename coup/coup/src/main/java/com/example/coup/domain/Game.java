@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Game {
     private String gameId;
     private List<Player> players;
@@ -66,6 +68,7 @@ public class Game {
         this.currentTurnIndex = (int) (Math.random() * players.size());
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Player getCurrentPlayer() {
         if (players.isEmpty()) return null;
         return players.get(currentTurnIndex);
