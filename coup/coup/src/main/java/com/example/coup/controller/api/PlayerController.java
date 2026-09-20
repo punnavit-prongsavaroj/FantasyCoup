@@ -34,4 +34,10 @@ public class PlayerController {
         
         return ResponseEntity.notFound().build();
     }
+
+    @GetMapping("/health")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<String> healthCheck() {
+        return ResponseEntity.ok("OK");
+    }
 }
