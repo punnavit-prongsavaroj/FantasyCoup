@@ -6,8 +6,8 @@ import path from 'path'
 
 const backendStarterPlugin = () => ({
   name: 'backend-starter',
-  configureServer(server) {
-    server.middlewares.use(async (req, res, next) => {
+  configureServer(server: any) {
+    server.middlewares.use(async (req: any, res: any, next: any) => {
       if (req.url === '/__dev/start-backend' && req.method === 'POST') {
         const backendPath = path.resolve(__dirname, '../coup/coup')
         
