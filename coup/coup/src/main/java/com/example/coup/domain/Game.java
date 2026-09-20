@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class Game {
     private String gameId;
     private List<Player> players;

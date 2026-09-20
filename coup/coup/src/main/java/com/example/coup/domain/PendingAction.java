@@ -4,8 +4,10 @@ import com.example.coup.domain.enums.ActionType;
 import lombok.Data;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class PendingAction {
     private ActionType actionType;
     private String sourcePlayer;

@@ -135,10 +135,12 @@ export const useGameStore = create<GameState>()(
             }
           });
 
-          stompClient.publish({
-            destination: `/app/game.join`,
-            body: JSON.stringify({ gameId, playerName }),
-          });
+          setTimeout(() => {
+            stompClient.publish({
+              destination: `/app/game.join`,
+              body: JSON.stringify({ gameId, playerName }),
+            });
+          }, 200);
           
           set({ gameId, currentSubscription: sub });
         }
